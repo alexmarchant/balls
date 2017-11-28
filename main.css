@@ -1,0 +1,23 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+}
+
+#game-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+}
+
+#state {
+  display: flex;
+  justify-content: space-between;
+}
+
+#canvas {
+  border: 1px solid black;
+}
