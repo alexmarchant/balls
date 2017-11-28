@@ -1,1 +1,5 @@
-{}
+{
+  "projects": {
+    "default": "balls-239c1"
+  }
+}
