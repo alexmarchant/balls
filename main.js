@@ -23,7 +23,7 @@ const ballRadius = 7
 // ballVelocity is in pixels per second
 const ballVelocity = 900
 // delayBetweenBalls is in ms
-const delayBetweenBalls = 100
+const delayBetweenBalls = 30
 
 // Get html elements
 
@@ -154,6 +154,7 @@ function renderGame() {
   checkForLoseCondition()
   checkForNextLevel()
   renderBlocks()
+  renderAimFromX()
 
   if (state.aiming) {
     renderAimer()
@@ -184,6 +185,9 @@ function repositionBalls() {
     }
     if (ball.y - ballRadius > canvas.height) {
       ball.dead = true
+      if (!state.aimFromX) {
+        setState({aimFromX: ball.x})
+      }
     }
 
     // Block collisions
@@ -204,13 +208,6 @@ function repositionBalls() {
 }
 
 function renderBalls() {
-  const newBalls = []
-  state.balls.forEach(ball => {
-    if (!ball.dead) {
-      newBalls.push(ball)
-    }
-  })
-  setState({balls: newBalls})
   state.balls.forEach(renderBall)
 }
 
@@ -251,16 +248,6 @@ function renderAimer() {
     ctx.strokeStyle = 'black'
     ctx.stroke()
   }
-
-  // Show aim from position w a single ball
-  const ball = {
-    x: fromX,
-    y: fromY,
-    xv: 0,
-    yv: 0,
-    dead: false,
-  }
-  renderBall(ball)
 
   // Handle click
   if (state.clickX) {
@@ -360,6 +347,7 @@ function shoot() {
 
   setState({
     aiming: false,
+    aimFromX: null,
   })
 }
 
@@ -514,5 +502,19 @@ function blockColor(block) {
   const b = Math.max(Math.floor((255 - block.hits) * 10), 0)
 
   return `rgb(${r}, ${g}, ${b})`
+}
+
+
+function renderAimFromX() {
+  if (!state.aimFromX) { return }
+  
+  const ball = {
+    x: state.aimFromX,
+    y: canvas.height,
+    xv: 0,
+    yv: 0,
+    dead: false,
+  }
+  renderBall(ball)
 }
 
