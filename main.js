@@ -58,14 +58,17 @@ function main() {
 
 function gameDidStart() {
   resizeCanvas()
-  setState({aimFromX: canvas.width / 2})
+  setState({aimFromX: canvasSize.width / 2})
   handleMouseEvents()
   startRenderLoop()
 }
 
 function resizeCanvas() {
-  canvas.width = canvasSize.width
-  canvas.height = canvasSize.height
+  canvas.width = canvasSize.width * 2
+  canvas.height = canvasSize.height * 2
+  canvas.style.width = canvasSize.width + 'px'
+  canvas.style.height = canvasSize.height + 'px'
+  ctx.scale(2,2)
 }
 
 function handleMouseEvents() {
@@ -177,13 +180,13 @@ function repositionBalls() {
     if (ball.x - ballRadius < 0) {
       ball.xv = -ball.xv
     }
-    if (ball.x + ballRadius > canvas.width) {
+    if (ball.x + ballRadius > canvasSize.width) {
       ball.xv = -ball.xv
     }
     if (ball.y - ballRadius < 0) {
       ball.yv = -ball.yv
     }
-    if (ball.y - ballRadius > canvas.height) {
+    if (ball.y - ballRadius > canvasSize.height) {
       ball.dead = true
       if (!state.aimFromX) {
         setState({aimFromX: ball.x})
@@ -234,7 +237,7 @@ function renderBlock(block) {
 
 function renderAimer() {
   const fromX = state.aimFromX
-  const fromY = canvas.height
+  const fromY = canvasSize.height
 
   // Handle hover
   if (state.mouseX) {
@@ -321,7 +324,7 @@ function checkForNextLevel() {
 
 function shoot() {
   const aimDeltaX = state.clickX - state.aimFromX
-  const aimDeltaY = state.clickY - canvas.height
+  const aimDeltaY = state.clickY - canvasSize.height
 
   const aimDeltaSum = Math.abs(aimDeltaY) + Math.abs(aimDeltaX)
 
@@ -330,7 +333,7 @@ function shoot() {
 
   const newBall = {
     x: state.aimFromX,
-    y: canvas.height,
+    y: canvasSize.height,
     xv: xv,
     yv: yv,
     dead: false,
@@ -437,11 +440,11 @@ function blockWasHit(hitBlock) {
 }
 
 function rowHeight() {
-  return canvas.height / (rows + 1)
+  return canvasSize.height / (rows + 1)
 }
 
 function columnWidth() {
-  return canvas.width / columns
+  return canvasSize.width / columns
 }
 
 function blockBallCollision(block, ball) {
@@ -510,7 +513,7 @@ function renderAimFromX() {
   
   const ball = {
     x: state.aimFromX,
-    y: canvas.height,
+    y: canvasSize.height,
     xv: 0,
     yv: 0,
     dead: false,
