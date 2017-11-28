@@ -16,6 +16,7 @@ var state = {
   lost: false,
   aimFromX: null,
   lastBallShot: new Date(),
+  ballCount: 1,
 }
 const rows = 10
 const columns = 10
@@ -29,6 +30,25 @@ const delayBetweenBalls = 30
 
 const canvas = document.getElementById('canvas')
 const ctx = canvas.getContext('2d')
+
+// Classes
+
+class Block {
+  constructor(row, column) {
+    this.row = row
+    this.column = column
+  }
+}
+
+class HitBlock extends Block {
+  constructor(row, column, hits) {
+    super(row, column)
+    this.hits = hits
+  }
+}
+
+class BallBlock extends Block {
+}
 
 // Start game
 
@@ -48,6 +68,11 @@ function setState(newState) {
 function stateDidChange(oldState) {
   if (oldState.level !== state.level) {
     levelDidChange()
+  }
+  if (
+    oldState.level !== state.level ||
+    oldState.ballCount !== state.ballCount
+  ) {
     updateUI()
   }
 }
@@ -196,11 +221,13 @@ function repositionBalls() {
     // Block collisions
     state.blocks.forEach(block => {
       const collision = blockBallCollision(block, ball)
-      if (collision.top || collision.bottom) {
-        ball.yv = -ball.yv
-      }
-      if (collision.left || collision.right) {
-        ball.xv = -ball.xv
+      if (block instanceof HitBlock) {
+        if (collision.top || collision.bottom) {
+          ball.yv = -ball.yv
+        }
+        if (collision.left || collision.right) {
+          ball.xv = -ball.xv
+        }
       }
     })
 
@@ -215,6 +242,14 @@ function renderBalls() {
 }
 
 function renderBlock(block) {
+  if (block instanceof HitBlock) {
+    renderHitBlock(block)
+  } else {
+    renderBallBlock(block)
+  }
+}
+
+function renderHitBlock(block) {
   const x = columnWidth() * block.column
   const y = rowHeight() * (block.row + 1) 
   const w = columnWidth()
@@ -233,6 +268,17 @@ function renderBlock(block) {
   const fy = y + ((h - fontSize) / 2) + fontSize
   ctx.fillStyle = 'white'
   ctx.fillText(text, fx, fy)
+}
+
+function renderBallBlock(block) {
+  const x = (columnWidth() * block.column) + (columnWidth() / 2)
+  const y = (rowHeight() * (block.row + 1)) + (rowHeight() / 2)
+  const radius = 10
+
+  ctx.beginPath()
+  ctx.arc(x, y, radius, 0, 2 * Math.PI, false)
+  ctx.fillStyle = '#ff3f00'
+  ctx.fill()
 }
 
 function renderAimer() {
@@ -273,18 +319,29 @@ function levelDidChange() {
     return block
   })
   const filledColumns = []
+  // HitBlocks
   for(var i = 0; i < blockCount; i++) {
     var column = getRandomInt(0, columns)
     while(filledColumns.indexOf(column) !== -1) {
       column = getRandomInt(0, columns)
     }
     filledColumns.push(column)
-    newBlocks.push({
-      row: 0,
-      column: column,
-      hits: state.level,
-    })
+    newBlocks.push(new HitBlock(
+      0,
+      column,
+      state.level
+    ))
   }
+  // BallBlock
+  var column = getRandomInt(0, columns)
+  while(filledColumns.indexOf(column) !== -1) {
+    column = getRandomInt(0, columns)
+  }
+  newBlocks.push(new BallBlock(
+    0,
+    column,
+  ))
+  // Add all blocks
   setState({blocks: newBlocks})
 }
 
@@ -339,7 +396,7 @@ function shoot() {
     dead: false,
   }
 
-  for(var i = 0; i < state.level; i++) {
+  for(var i = 0; i < state.ballCount; i++) {
     setTimeout(() => {
       const newBalls = [...state.balls]
       const newBallClone = {...newBall}
@@ -421,22 +478,41 @@ function ballBoundaries(ball) {
   }
 }
 
-function blockWasHit(hitBlock) {
+function blockWasHit(block) {
+  if (block instanceof HitBlock) {
+    hitBlockWasHit(block)
+  } else {
+    ballBlockWasHit(block)
+  }
+}
+
+function hitBlockWasHit(block) {
   const newBlocks = []
-  state.blocks.forEach(block => {
-    if (hitBlock === block) {
-      const hits = block.hits - 1
+  state.blocks.forEach(b => {
+    if (block === b) {
+      const hits = b.hits - 1
       if (hits !== 0) {
-        newBlocks.push({
-          ...block,
-          hits: hits,
-        })
+        b.hits -= 1
+        newBlocks.push(b)
       }
     } else {
-      newBlocks.push(block)
+      newBlocks.push(b)
     }
   })
   setState({blocks: newBlocks})
+}
+
+function ballBlockWasHit(block) {
+  const newBlocks = []
+  state.blocks.forEach(b => {
+    if (block !== b) {
+      newBlocks.push(b)
+    }
+  })
+  setState({
+    blocks: newBlocks,
+    ballCount: state.ballCount + 1,
+  })
 }
 
 function rowHeight() {
@@ -496,7 +572,7 @@ function blockBallCollision(block, ball) {
 
 function updateUI() {
   document.getElementById('levelCount').innerHTML = state.level
-  document.getElementById('ballCount').innerHTML = state.level
+  document.getElementById('ballCount').innerHTML = state.ballCount
 }
 
 function blockColor(block) {
