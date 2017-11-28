@@ -170,6 +170,7 @@ function renderGameOverScreen() {
       lost: false,
       blocks: [],
       level: 1,
+      ballCount: 1,
     })
   })
 }
