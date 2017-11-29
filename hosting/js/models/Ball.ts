@@ -4,30 +4,24 @@ import Velocity from '../interfaces/Velocity'
 import Boundaries from '../interfaces/Boundaries'
 import Collision from '../interfaces/Collision'
 
-const radius = 7
-const color = 'black'
-
 export default class Ball extends Collider {
   position: Position
   velocity: Velocity
-  dead: boolean
+  dead: boolean = false
+  color: string = 'black'
+  radius: number = 7
 
-  constructor(
-    position: Position,
-    velocity: Velocity,
-    dead: boolean
-  ) {
+  constructor(position: Position, velocity: Velocity) {
     super()
     this.position = position
     this.velocity = velocity
-    this.dead = dead
   }
 
   render(ctx: CanvasRenderingContext2D): void {
     if (this.dead) { return }
     ctx.beginPath()
-    ctx.arc(this.position.x, this.position.y, radius, 0, 2 * Math.PI, false)
-    ctx.fillStyle = color
+    ctx.arc(this.position.x, this.position.y, this.radius, 0, 2 * Math.PI, false)
+    ctx.fillStyle = this.color
     ctx.fill()
   }
 
@@ -99,10 +93,10 @@ export default class Ball extends Collider {
 
   private calculateBoundaries(position: Position): Boundaries {
     return {
-      minX: position.x - radius,
-      maxX: position.x + radius,
-      minY: position.y - radius,
-      maxY: position.y + radius,
+      minX: position.x - this.radius,
+      maxX: position.x + this.radius,
+      minY: position.y - this.radius,
+      maxY: position.y + this.radius,
     }
   }
 }

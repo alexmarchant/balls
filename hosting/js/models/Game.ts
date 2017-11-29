@@ -11,8 +11,8 @@ import Boundaries from '../interfaces/Boundaries'
 // Constants/Settings
 
 const fps = 144;
-const rows = 10
-const columns = 10
+const rows = 13
+const columns = 13
 // delayBetweenBalls is in ms
 const delayBetweenBalls = 30
 const ballVelocity = 900
@@ -253,7 +253,7 @@ export default class Game {
 
   private checkForLoseCondition() {
     this.state.blocks.forEach((block) => {
-      if (block.boundaries().maxY === this.canvasSize.height) {
+      if (Math.ceil(block.boundaries().maxY) >= this.canvasSize.height) {
         this.setState({lost: true})
       }
     });
@@ -302,7 +302,11 @@ export default class Game {
       if (boundaries.minY > this.canvasSize.height) {
         ball.dead = true
         if (!this.state.aimFromX) {
-          this.setState({aimFromX: ball.position.x})
+          let x = ball.position.x
+          if (ball.boundaries().minX < 0) {
+            x = 0 + ball.radius
+          }
+          this.setState({aimFromX: x})
         }
       }
 
@@ -377,10 +381,14 @@ export default class Game {
         width: this.columnWidth(),
         height: this.rowHeight(),
       }
+      let hits = this.state.level
+      if (getRandomInt(1, 11) === 1) {
+        hits = this.state.level * 2
+      }
       newBlocks.push(new HitBlock(
         position,
         size,
-        this.state.level
+        hits
       ))
     }
     // BallBlock
@@ -422,8 +430,7 @@ export default class Game {
     for(var i = 0; i < this.state.ballCount; i++) {
       const newBall = new Ball(
         {...position},
-        {...velocity},
-        false
+        {...velocity}
       )
       setTimeout(() => {
         const newBalls = [...this.state.balls]
@@ -493,8 +500,7 @@ export default class Game {
     }
     const ball = new Ball(
       position,
-      {x: 0, y: 0},
-      false
+      {x: 0, y: 0}
     )
     ball.render(this.ctx)
   }
