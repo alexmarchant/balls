@@ -2,6 +2,7 @@ import Collider from './Collider'
 import Position from '../interfaces/Position'
 import Velocity from '../interfaces/Velocity'
 import Boundaries from '../interfaces/Boundaries'
+import Collision from '../interfaces/Collision'
 
 const radius = 7
 const color = 'black'

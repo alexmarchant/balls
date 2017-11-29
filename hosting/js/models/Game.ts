@@ -308,7 +308,10 @@ export default class Game {
 
       // Block collisions
       this.state.blocks.forEach(block => {
-        const collision = this.blockBallCollision(block, ball)
+        const collision = ball.collisionWith(block, 1 / fps)
+        if (collision.top || collision.bottom || collision.left || collision.right) {
+          this.blockWasHit(block)
+        }
         if (block instanceof HitBlock) {
           if (collision.top || collision.bottom) {
             ball.velocity.y = -ball.velocity.y
@@ -479,16 +482,6 @@ export default class Game {
 
   private columnWidth() {
     return this.canvasSize.width / columns
-  }
-
-  private blockBallCollision(block: Block, ball: Ball): Collision {
-    const collision = ball.collisionWith(block, 1 / fps)
-
-    if (collision.top || collision.bottom || collision.left || collision.right) {
-      this.blockWasHit(block)
-    }
-
-    return collision
   }
 
   private renderAimFromX() {
