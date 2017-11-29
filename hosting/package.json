@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "webpack-dev-server --config ./build/webpack.config.js --progress --colors",
-    "build": "webpack -p --config ./build/webpack.config.production.js",
+    "build": "webpack -p --config ./build/webpack.config.js",
     "deploy": "rm ./public/* && npm run build && cd .. && firebase deploy"
   },
   "author": "",
