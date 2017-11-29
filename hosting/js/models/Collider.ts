@@ -3,7 +3,4 @@ import Collision from '../interfaces/Collision'
 
 export default abstract class Collider {
   abstract boundaries(): Boundaries
-
-  //collidesWith(collider: Collider): Collision {
-  //}
 }

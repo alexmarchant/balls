@@ -482,39 +482,7 @@ export default class Game {
   }
 
   private blockBallCollision(block: Block, ball: Ball): Collision {
-    const blockB = block.boundaries()
-    const ballB = ball.boundaries()
-
-    var collision: Collision = {
-      top: false,
-      bottom: false,
-      right: false,
-      left: false,
-    }
-
-    if (
-      (
-        (ballB.minX <= blockB.maxX && ballB.minX >= blockB.minX) || // Right collision
-        (ballB.maxX >= blockB.minX && ballB.maxX <= blockB.maxX) // Left collision
-      ) && (
-        (ballB.minY <= blockB.maxY && ballB.minY >= blockB.minY) || // Top collision
-        (ballB.maxY >= blockB.minY && ballB.maxY <= blockB.maxY) // Bottom collision
-      )
-    ) {
-      const previousBallB = ball.previousBoundaries(1 / fps)
-      if (previousBallB.minX >= blockB.maxX) {
-        collision.right = true
-      }
-      if (previousBallB.maxX <= blockB.minX) {
-        collision.left = true
-      }
-      if (previousBallB.minY >= blockB.maxY) {
-        collision.bottom = true
-      }
-      if (previousBallB.maxY <= blockB.minY) {
-        collision.top = true
-      }
-    }
+    const collision = ball.collisionWith(block, 1 / fps)
 
     if (collision.top || collision.bottom || collision.left || collision.right) {
       this.blockWasHit(block)

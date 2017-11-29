@@ -57,6 +57,45 @@ export default class Ball extends Collider {
     }
   }
 
+  collisionWith(target: Collider, seconds: number): Collision {
+    const targetB = target.boundaries()
+    const thisB = this.boundaries()
+
+    const collision = {
+      top: false,
+      bottom: false,
+      right: false,
+      left: false,
+    }
+
+    if (
+      (
+        (thisB.minX <= targetB.maxX && thisB.minX >= targetB.minX) || // Right 
+        (thisB.maxX >= targetB.minX && thisB.maxX <= targetB.maxX) // Left 
+      ) && (
+        (thisB.minY <= targetB.maxY && thisB.minY >= targetB.minY) || // Top 
+        (thisB.maxY >= targetB.minY && thisB.maxY <= targetB.maxY) // Bottom 
+      )
+    ) {
+      const previousB = this.previousBoundaries(seconds)
+
+      if (previousB.minX >= targetB.maxX) {
+        collision.right = true
+      }
+      if (previousB.maxX <= targetB.minX) {
+        collision.left = true
+      }
+      if (previousB.minY >= targetB.maxY) {
+        collision.bottom = true
+      }
+      if (previousB.maxY <= targetB.minY) {
+        collision.top = true
+      }
+    }
+
+    return collision
+  }
+
   private calculateBoundaries(position: Position): Boundaries {
     return {
       minX: position.x - radius,
