@@ -13,11 +13,9 @@ import Boundaries from '../interfaces/Boundaries'
 const fps = 144;
 const rows = 10
 const columns = 10
-const ballRadius = 7
-// ballVelocity is in pixels per second
-const ballVelocity = 900
 // delayBetweenBalls is in ms
 const delayBetweenBalls = 30
+const ballVelocity = 900
 
 function getRandomInt(min: number, max: number): number {
   min = Math.ceil(min);
@@ -287,23 +285,24 @@ export default class Game {
 
   private repositionBalls() {
     const newBalls = this.state.balls.map(ball => {
-      ball.x = ball.x + (ball.xv / fps)
-      ball.y = ball.y + (ball.yv / fps)
+      ball.moveToNextPosition(1 / fps)
+
+      const boundaries = ball.boundaries()
 
       // Wall collisions
-      if (ball.x - ballRadius < 0) {
-        ball.xv = -ball.xv
+      if (
+        boundaries.minX < 0 || 
+        boundaries.maxX > this.canvasSize.width
+      ) {
+        ball.velocity.x = -ball.velocity.x
       }
-      if (ball.x + ballRadius > this.canvasSize.width) {
-        ball.xv = -ball.xv
+      if (boundaries.minY < 0) {
+        ball.velocity.y = -ball.velocity.y
       }
-      if (ball.y - ballRadius < 0) {
-        ball.yv = -ball.yv
-      }
-      if (ball.y - ballRadius > this.canvasSize.height) {
+      if (boundaries.minY > this.canvasSize.height) {
         ball.dead = true
         if (!this.state.aimFromX) {
-          this.setState({aimFromX: ball.x})
+          this.setState({aimFromX: ball.position.x})
         }
       }
 
@@ -312,10 +311,10 @@ export default class Game {
         const collision = this.blockBallCollision(block, ball)
         if (block instanceof HitBlock) {
           if (collision.top || collision.bottom) {
-            ball.yv = -ball.yv
+            ball.velocity.y = -ball.velocity.y
           }
           if (collision.left || collision.right) {
-            ball.xv = -ball.xv
+            ball.velocity.x = -ball.velocity.x
           }
         }
       })
@@ -327,7 +326,7 @@ export default class Game {
   }
 
   private renderBalls() {
-    this.state.balls.forEach(this.renderBall.bind(this))
+    this.state.balls.forEach(ball => ball.render(this.ctx))
   }
 
   private renderAimer() {
@@ -351,14 +350,6 @@ export default class Game {
     if (this.state.clickPosition) {
       this.shoot()
     }
-  }
-
-  private renderBall(ball: Ball) {
-    if (ball.dead) { return }
-    this.ctx.beginPath()
-    this.ctx.arc(ball.x, ball.y, ballRadius, 0, 2 * Math.PI, false)
-    this.ctx.fillStyle = 'black'
-    this.ctx.fill()
   }
 
   private levelDidChange() {
@@ -416,22 +407,24 @@ export default class Game {
 
     const aimDeltaSum = Math.abs(aimDeltaY) + Math.abs(aimDeltaX)
 
-    const xv = (aimDeltaX / aimDeltaSum) * ballVelocity
-    const yv = (aimDeltaY / aimDeltaSum) * ballVelocity
-
-    const newBall = new Ball(
-      this.state.aimFromX,
-      this.canvasSize.height,
-      xv,
-      yv,
-      false
-    )
+    const position = {
+      x: this.state.aimFromX,
+      y: this.canvasSize.height,
+    }
+    const velocity = {
+      x: (aimDeltaX / aimDeltaSum) * ballVelocity,
+      y: (aimDeltaY / aimDeltaSum) * ballVelocity,
+    }
 
     for(var i = 0; i < this.state.ballCount; i++) {
+      const newBall = new Ball(
+        {...position},
+        {...velocity},
+        false
+      )
       setTimeout(() => {
         const newBalls = [...this.state.balls]
-        const newBallClone = {...newBall}
-        newBalls.push(newBallClone)
+        newBalls.push(newBall)
         this.setState({balls: newBalls})
       }, i * delayBetweenBalls)
     }
@@ -440,15 +433,6 @@ export default class Game {
       aiming: false,
       aimFromX: null,
     })
-  }
-
-  private ballBoundaries(ball: Ball): Boundaries {
-    return {
-      minX: ball.x - ballRadius,
-      minY: ball.y - ballRadius,
-      maxX: ball.x + ballRadius,
-      maxY: ball.y + ballRadius,
-    }
   }
 
   private blockWasHit(block: Block) {
@@ -499,7 +483,7 @@ export default class Game {
 
   private blockBallCollision(block: Block, ball: Ball): Collision {
     const blockB = block.boundaries()
-    const ballB = this.ballBoundaries(ball)
+    const ballB = ball.boundaries()
 
     var collision: Collision = {
       top: false,
@@ -517,10 +501,7 @@ export default class Game {
         (ballB.maxY >= blockB.minY && ballB.maxY <= blockB.maxY) // Bottom collision
       )
     ) {
-      const previousBallX = ball.x - (ball.xv / fps)
-      const previousBallY = ball.y - (ball.yv / fps)
-      const previousBall = new Ball(previousBallX, previousBallY, 0, 0, true)
-      const previousBallB = this.ballBoundaries(previousBall)
+      const previousBallB = ball.previousBoundaries(1 / fps)
       if (previousBallB.minX >= blockB.maxX) {
         collision.right = true
       }
@@ -545,14 +526,16 @@ export default class Game {
   private renderAimFromX() {
     if (!this.state.aimFromX) { return }
     
+    const position = {
+      x: this.state.aimFromX,
+      y: this.canvasSize.height,
+    }
     const ball = new Ball(
-      this.state.aimFromX,
-      this.canvasSize.height,
-      0,
-      0,
+      position,
+      {x: 0, y: 0},
       false
     )
-    this.renderBall(ball)
+    ball.render(this.ctx)
   }
 }
 
