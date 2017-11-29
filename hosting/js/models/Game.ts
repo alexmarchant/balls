@@ -255,7 +255,7 @@ export default class Game {
 
   private checkForLoseCondition() {
     this.state.blocks.forEach((block) => {
-      if (block.row === rows - 1) {
+      if (block.boundaries().maxY === this.canvasSize.height) {
         this.setState({lost: true})
       }
     });
@@ -282,9 +282,7 @@ export default class Game {
   }
 
   private renderBlocks() {
-    this.state.blocks.forEach(block => {
-      block.render(this.ctx, this.columnWidth(), this.rowHeight())
-    })
+    this.state.blocks.forEach(block => block.render(this.ctx))
   }
 
   private repositionBalls() {
@@ -366,7 +364,7 @@ export default class Game {
   private levelDidChange() {
     const blockCount = getRandomInt(1, columns - 1)
     const newBlocks = this.state.blocks.map(block => {
-      block.row += 1
+      block.position.y += this.rowHeight()
       return block
     })
     const filledColumns = []
@@ -377,9 +375,17 @@ export default class Game {
         column = getRandomInt(0, columns)
       }
       filledColumns.push(column)
+      const position = {
+        x: column * this.columnWidth(),
+        y: this.rowHeight(),
+      }
+      const size = {
+        width: this.columnWidth(),
+        height: this.rowHeight(),
+      }
       newBlocks.push(new HitBlock(
-        0,
-        column,
+        position,
+        size,
         this.state.level
       ))
     }
@@ -388,9 +394,17 @@ export default class Game {
     while(filledColumns.indexOf(column) !== -1) {
       column = getRandomInt(0, columns)
     }
+    const position = {
+      x: column * this.columnWidth(),
+      y: this.rowHeight(),
+    }
+    const size = {
+      width: this.columnWidth(),
+      height: this.rowHeight(),
+    }
     newBlocks.push(new BallBlock(
-      0,
-      column,
+      position,
+      size
     ))
     // Add all blocks
     this.setState({blocks: newBlocks})
@@ -426,19 +440,6 @@ export default class Game {
       aiming: false,
       aimFromX: null,
     })
-  }
-
-
-  private blockBoundaries(block: Block) {
-    const x = this.columnWidth() * block.column
-    const y = this.rowHeight() * (block.row + 1)
-
-    return {
-      minX: x,
-      minY: y,
-      maxX: x + this.columnWidth(),
-      maxY: y + this.rowHeight(),
-    }
   }
 
   private ballBoundaries(ball: Ball): Boundaries {
@@ -497,7 +498,7 @@ export default class Game {
   }
 
   private blockBallCollision(block: Block, ball: Ball): Collision {
-    const blockB = this.blockBoundaries(block)
+    const blockB = block.boundaries()
     const ballB = this.ballBoundaries(ball)
 
     var collision: Collision = {
