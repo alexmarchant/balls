@@ -1,5 +1,5 @@
 import Block from './Block'
-import Position from '../interfaces/Position'
+import Point from '../interfaces/Point'
 import Size from '../interfaces/Size'
 
 const textColor = 'white'
@@ -8,23 +8,23 @@ const strokeColor = 'white'
 export default class HitBlock extends Block {
   hits: number
 
-  constructor(position: Position, size: Size, hits: number) {
-    super(position, size)
+  constructor(point: Point, size: Size, hits: number) {
+    super(point, size)
     this.hits = hits
   }
 
   render(ctx: CanvasRenderingContext2D) {
     ctx.fillStyle = this.blockColor()
     ctx.fillRect(
-      this.position.x,
-      this.position.y,
+      this.point.x,
+      this.point.y,
       this.size.width,
       this.size.height
     )
     ctx.strokeStyle = strokeColor
     ctx.strokeRect(
-      this.position.x,
-      this.position.y,
+      this.point.x,
+      this.point.y,
       this.size.width,
       this.size.height
     )
@@ -33,8 +33,8 @@ export default class HitBlock extends Block {
     const font = `${fontSize}px sans-serif`
     const text = `${this.hits}`
     const textWidth = ctx.measureText(text).width
-    const fx = this.position.x + ((this.size.width - textWidth) / 2)
-    const fy = this.position.y + ((this.size.height - fontSize) / 2) + fontSize
+    const fx = this.point.x + ((this.size.width - textWidth) / 2)
+    const fy = this.point.y + ((this.size.height - fontSize) / 2) + fontSize
     ctx.fillStyle = textColor
     ctx.fillText(text, fx, fy)
   }

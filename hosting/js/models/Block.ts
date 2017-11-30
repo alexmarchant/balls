@@ -1,15 +1,15 @@
 import Collider from './Collider'
-import Position from '../interfaces/Position'
+import Point from '../interfaces/Point'
 import Size from '../interfaces/Size'
 import Boundaries from '../interfaces/Boundaries'
 
 export default abstract class Block extends Collider {
-  position: Position
+  point: Point
   size: Size
 
-  constructor(position: Position, size: Size) {
+  constructor(point: Point, size: Size) {
     super()
-    this.position = position
+    this.point = point
     this.size = size
   }
 
@@ -17,10 +17,10 @@ export default abstract class Block extends Collider {
 
   boundaries(): Boundaries {
     return {
-      minX: this.position.x,
-      maxX: this.position.x + this.size.width,
-      minY: this.position.y,
-      maxY: this.position.y + this.size.height,
+      minX: this.point.x,
+      maxX: this.point.x + this.size.width,
+      minY: this.point.y,
+      maxY: this.point.y + this.size.height,
     }
   }
 }

@@ -1,54 +1,54 @@
 import Collider from './Collider'
-import Position from '../interfaces/Position'
+import Point from '../interfaces/Point'
 import Velocity from '../interfaces/Velocity'
 import Boundaries from '../interfaces/Boundaries'
 import Collision from '../interfaces/Collision'
 
 export default class Ball extends Collider {
-  position: Position
+  point: Point
   velocity: Velocity
   dead: boolean = false
   color: string = 'black'
   radius: number = 7
 
-  constructor(position: Position, velocity: Velocity) {
+  constructor(point: Point, velocity: Velocity) {
     super()
-    this.position = position
+    this.point = point
     this.velocity = velocity
   }
 
   render(ctx: CanvasRenderingContext2D): void {
     if (this.dead) { return }
     ctx.beginPath()
-    ctx.arc(this.position.x, this.position.y, this.radius, 0, 2 * Math.PI, false)
+    ctx.arc(this.point.x, this.point.y, this.radius, 0, 2 * Math.PI, false)
     ctx.fillStyle = this.color
     ctx.fill()
   }
 
   boundaries(): Boundaries {
-    return this.calculateBoundaries(this.position)
+    return this.calculateBoundaries(this.point)
   }
 
   previousBoundaries(seconds: number): Boundaries {
-    const position = this.lastPosition(seconds)
-    return this.calculateBoundaries(position)
+    const point = this.lastPoint(seconds)
+    return this.calculateBoundaries(point)
   }
 
-  moveToNextPosition(seconds: number) {
-    this.position = this.nextPosition(seconds)
+  moveToNextPoint(seconds: number) {
+    this.point = this.nextPoint(seconds)
   }
 
-  nextPosition(seconds: number): Position {
+  nextPoint(seconds: number): Point {
     return {
-      x: this.position.x + this.velocity.x * seconds,
-      y: this.position.y + this.velocity.y * seconds,
+      x: this.point.x + this.velocity.x * seconds,
+      y: this.point.y + this.velocity.y * seconds,
     }
   }
 
-  lastPosition(seconds: number): Position {
+  lastPoint(seconds: number): Point {
     return {
-      x: this.position.x - this.velocity.x * seconds,
-      y: this.position.y - this.velocity.y * seconds,
+      x: this.point.x - this.velocity.x * seconds,
+      y: this.point.y - this.velocity.y * seconds,
     }
   }
 
@@ -91,12 +91,12 @@ export default class Ball extends Collider {
     return collision
   }
 
-  private calculateBoundaries(position: Position): Boundaries {
+  private calculateBoundaries(point: Point): Boundaries {
     return {
-      minX: position.x - this.radius,
-      maxX: position.x + this.radius,
-      minY: position.y - this.radius,
-      maxY: position.y + this.radius,
+      minX: point.x - this.radius,
+      maxX: point.x + this.radius,
+      minY: point.y - this.radius,
+      maxY: point.y + this.radius,
     }
   }
 }

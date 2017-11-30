@@ -3,6 +3,7 @@ import * as React from 'react'
 import Canvas from './Canvas'
 import Game from '../models/Game'
 import Size from '../interfaces/Size'
+import Point from '../interfaces/Point'
 
 export interface RootState {
   level: number
@@ -23,7 +24,7 @@ export default class Root extends React.Component<{}, RootState> {
       canvasSize: {
         width: 600,
         height: 600,
-      }
+      },
     }
   }
 
@@ -39,6 +40,14 @@ export default class Root extends React.Component<{}, RootState> {
       (state: any) => this.setState(state)
     )
     this.game.start()
+  }
+
+  setMousePoint(point: Point) {
+    this.game.setState({mousePoint: point})
+  }
+
+  setClickPoint(point: Point) {
+    this.game.setState({clickPoint: point})
   }
 
   render() {
@@ -59,6 +68,8 @@ export default class Root extends React.Component<{}, RootState> {
           height={this.state.canvasSize.height}
           setCanvas={canvas => { this.canvas = canvas }}
           setCTX={ctx => { this.ctx = ctx }}
+          setMousePoint={this.setMousePoint.bind(this)}
+          setClickPoint={this.setClickPoint.bind(this)}
         />
       </div>
     )

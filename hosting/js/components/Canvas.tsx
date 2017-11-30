@@ -1,10 +1,13 @@
 import * as React from 'react'
+import Point from '../interfaces/Point'
 
 interface CanvasProps {
   width: number
   height: number
   setCanvas: (canvas: HTMLCanvasElement) => void
   setCTX: (ctx: CanvasRenderingContext2D) => void
+  setMousePoint: (point: Point) => void
+  setClickPoint: (point: Point) => void
 }
 
 export default class Canvas extends React.Component<CanvasProps, {}> {
@@ -18,6 +21,24 @@ export default class Canvas extends React.Component<CanvasProps, {}> {
     this.props.setCTX(this.ctx)
   }
 
+  handleMouseLeave(event: MouseEvent) {
+    this.props.setMousePoint(null)
+  }
+
+  handleMouseMove(event: MouseEvent) {
+    this.props.setMousePoint({
+      x: event.clientX - this.canvas.offsetLeft,
+      y: event.clientY - this.canvas.offsetTop,
+    })
+  }
+
+  handleClick(event: MouseEvent) {
+    this.props.setClickPoint({
+      x: event.clientX - this.canvas.offsetLeft,
+      y: event.clientY - this.canvas.offsetTop,
+    })
+  }
+
   render() {
     return (
       <canvas
@@ -29,6 +50,9 @@ export default class Canvas extends React.Component<CanvasProps, {}> {
           width: this.props.width,
           height: this.props.height,
         }}
+        onMouseLeave={this.handleMouseLeave.bind(this)}
+        onMouseMove={this.handleMouseMove.bind(this)}
+        onClick={this.handleClick.bind(this)}
       >
       </canvas>
     )

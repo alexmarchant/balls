@@ -2,7 +2,7 @@ import Block from './Block'
 import HitBlock from './HitBlock'
 import BallBlock from './BallBlock'
 import Ball from './Ball'
-import Position from '../interfaces/Position'
+import Point from '../interfaces/Point'
 import { RootState } from '../components/Root'
 import Size from '../interfaces/Size'
 import Collision from '../interfaces/Collision'
@@ -11,8 +11,8 @@ import Boundaries from '../interfaces/Boundaries'
 // Constants/Settings
 
 const fps = 144;
-const rows = 13
-const columns = 13
+const rows = 10
+const columns = 7
 // delayBetweenBalls is in ms
 const delayBetweenBalls = 30
 const ballVelocity = 900
@@ -27,7 +27,7 @@ function getRandomInt(min: number, max: number): number {
 
 interface GameState {
   startScreen: boolean
-  mousePosition: Position
+  mousePoint: Point
   aiming: boolean
   blocks: Array<Block>
   balls: Array<Ball>
@@ -35,7 +35,7 @@ interface GameState {
   lost: boolean
   aimFromX: number
   ballCount: number
-  clickPosition: Position
+  clickPoint: Point
 }
 
 export default class Game {
@@ -59,8 +59,7 @@ export default class Game {
   }
 
   start() {
-    this.setState({aimFromX: this.canvas.width / 2 / 2})
-    this.handleMouseEvents()
+    this.levelDidChange()
     this.startRenderLoop()
   }
 
@@ -88,58 +87,16 @@ export default class Game {
   private defaultGameState(): GameState {
     return {
       startScreen: true,
-      mousePosition: null,
+      mousePoint: null,
       aiming: true,
       blocks: [],
       balls: [],
-      level: 0,
+      level: 1,
       lost: false,
-      aimFromX: null,
+      aimFromX: this.canvasSize.width / 2,
       ballCount: 1,
-      clickPosition: null,
+      clickPoint: null,
     }
-  }
-
-  private handleMouseEvents() {
-    this.canvas.addEventListener('mouseenter', this.listenToMouseMoveEvents.bind(this))
-    this.canvas.addEventListener('mouseenter', this.listenToMouseClickEvents.bind(this))
-    this.canvas.addEventListener('mouseleave', this.stopListeningToMouseMoveEvents.bind(this))
-    this.canvas.addEventListener('mouseleave', this.stopListeningToMouseClickEvents.bind(this))
-    this.canvas.addEventListener('mouseleave', () => {this.setState({mousePosition: null})})
-  }
-
-  private listenToMouseMoveEvents() {
-    this.canvas.addEventListener('mousemove', this.setMousePositionState.bind(this))
-  }
-
-  private stopListeningToMouseMoveEvents() {
-    this.canvas.removeEventListener('mousemove', this.setMousePositionState.bind(this))
-  }
-
-  private setMousePositionState(event: MouseEvent) {
-    this.setState({
-      mousePosition: {
-        x: event.clientX - this.canvas.offsetLeft,
-        y: event.clientY - this.canvas.offsetTop,
-      }
-    })
-  }
-
-  private listenToMouseClickEvents() {
-    this.canvas.addEventListener('click', this.setClickPositionState.bind(this))
-  }
-
-  private stopListeningToMouseClickEvents() {
-    this.canvas.removeEventListener('click', this.setClickPositionState.bind(this))
-  }
-
-  private setClickPositionState(event: MouseEvent) {
-    this.setState({
-      clickPosition: {
-        x: event.clientX - this.canvas.offsetLeft,
-        y: event.clientY - this.canvas.offsetTop,
-      }
-    })
   }
 
   private startRenderLoop() {
@@ -167,7 +124,9 @@ export default class Game {
     }
 
     // Clear mouse clicks
-    this.setState({clickPosition: null})
+    // If nothing does anything with the mouse click in the previous
+    // frame it gets tossed
+    this.setState({clickPoint: null})
   }
 
   private renderStartScreen() {
@@ -178,12 +137,9 @@ export default class Game {
 
   private renderGameOverScreen() {
     this.renderCenteredButton('Play Again', () => {
-      this.setState({
-        lost: false,
-        blocks: [],
-        level: 1,
-        ballCount: 1,
-      })
+      const newState = {...this.defaultGameState()}
+      newState.startScreen = false
+      this.setState(newState)
     })
   }
 
@@ -204,11 +160,11 @@ export default class Game {
 
     // If hover over button
     if (
-      this.state.mousePosition &&
-      this.state.mousePosition.x > bx && 
-      this.state.mousePosition.x < bx + bw &&
-      this.state.mousePosition.y > by &&
-      this.state.mousePosition.y < by + bh
+      this.state.mousePoint &&
+      this.state.mousePoint.x > bx && 
+      this.state.mousePoint.x < bx + bw &&
+      this.state.mousePoint.y > by &&
+      this.state.mousePoint.y < by + bh
     ) {
       this.ctx.fillStyle = 'grey'
     } else {
@@ -223,21 +179,17 @@ export default class Game {
 
     // If click on button
     if (
-      this.state.clickPosition &&
-      this.state.clickPosition.x > bx && 
-      this.state.clickPosition.x < bx + bw &&
-      this.state.clickPosition.y > by &&
-      this.state.clickPosition.y < by + bh
+      this.state.clickPoint &&
+      this.state.clickPoint.x > bx && 
+      this.state.clickPoint.x < bx + bw &&
+      this.state.clickPoint.y > by &&
+      this.state.clickPoint.y < by + bh
     ) {
       clickHandler()
     }
   }
 
   private renderGame() {
-    if (this.state.level === 0) {
-      this.setState({level: 1})
-    }
-
     this.checkForLoseCondition()
     this.checkForNextLevel()
     this.renderBlocks()
@@ -285,7 +237,7 @@ export default class Game {
 
   private repositionBalls() {
     const newBalls = this.state.balls.map(ball => {
-      ball.moveToNextPosition(1 / fps)
+      ball.moveToNextPoint(1 / fps)
 
       const boundaries = ball.boundaries()
 
@@ -302,7 +254,7 @@ export default class Game {
       if (boundaries.minY > this.canvasSize.height) {
         ball.dead = true
         if (!this.state.aimFromX) {
-          let x = ball.position.x
+          let x = ball.point.x
           if (ball.boundaries().minX < 0) {
             x = 0 + ball.radius
           }
@@ -341,9 +293,9 @@ export default class Game {
     const fromY = this.canvasSize.height
 
     // Handle hover
-    if (this.state.mousePosition) {
-      const toX = this.state.mousePosition.x
-      const toY = this.state.mousePosition.y
+    if (this.state.mousePoint) {
+      const toX = this.state.mousePoint.x
+      const toY = this.state.mousePoint.y
 
       this.ctx.beginPath()
       this.ctx.moveTo(fromX, fromY)
@@ -354,7 +306,7 @@ export default class Game {
     }
 
     // Handle click
-    if (this.state.clickPosition) {
+    if (this.state.clickPoint) {
       this.shoot()
     }
   }
@@ -362,7 +314,7 @@ export default class Game {
   private levelDidChange() {
     const blockCount = getRandomInt(1, columns - 1)
     const newBlocks = this.state.blocks.map(block => {
-      block.position.y += this.rowHeight()
+      block.point.y += this.rowHeight()
       return block
     })
     const filledColumns = []
@@ -373,7 +325,7 @@ export default class Game {
         column = getRandomInt(0, columns)
       }
       filledColumns.push(column)
-      const position = {
+      const point = {
         x: column * this.columnWidth(),
         y: this.rowHeight(),
       }
@@ -386,7 +338,7 @@ export default class Game {
         hits = this.state.level * 2
       }
       newBlocks.push(new HitBlock(
-        position,
+        point,
         size,
         hits
       ))
@@ -396,7 +348,7 @@ export default class Game {
     while(filledColumns.indexOf(column) !== -1) {
       column = getRandomInt(0, columns)
     }
-    const position = {
+    const point = {
       x: column * this.columnWidth(),
       y: this.rowHeight(),
     }
@@ -405,7 +357,7 @@ export default class Game {
       height: this.rowHeight(),
     }
     newBlocks.push(new BallBlock(
-      position,
+      point,
       size
     ))
     // Add all blocks
@@ -413,12 +365,12 @@ export default class Game {
   }
 
   private shoot() {
-    const aimDeltaX = this.state.clickPosition.x - this.state.aimFromX
-    const aimDeltaY = this.state.clickPosition.y - this.canvasSize.height
+    const aimDeltaX = this.state.clickPoint.x - this.state.aimFromX
+    const aimDeltaY = this.state.clickPoint.y - this.canvasSize.height
 
     const aimDeltaSum = Math.abs(aimDeltaY) + Math.abs(aimDeltaX)
 
-    const position = {
+    const point = {
       x: this.state.aimFromX,
       y: this.canvasSize.height,
     }
@@ -429,7 +381,7 @@ export default class Game {
 
     for(var i = 0; i < this.state.ballCount; i++) {
       const newBall = new Ball(
-        {...position},
+        {...point},
         {...velocity}
       )
       setTimeout(() => {
@@ -494,13 +446,14 @@ export default class Game {
   private renderAimFromX() {
     if (!this.state.aimFromX) { return }
     
-    const position = {
+    const point = {
       x: this.state.aimFromX,
       y: this.canvasSize.height,
     }
+    const velocity = {x: 0, y: 0}
     const ball = new Ball(
-      position,
-      {x: 0, y: 0}
+      point,
+      velocity
     )
     ball.render(this.ctx)
   }
